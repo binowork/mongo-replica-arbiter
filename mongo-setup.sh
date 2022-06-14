@@ -8,7 +8,7 @@ fi
 
 # shellcheck source=/dev/null
 source /data/.env
-DB_HOST=${1}
+DB_HOST="${1:-$MONGO_INITDB_HOST}"
 while true; do
     cmd=$( (mongo --host "${DB_HOST}" --quiet --eval "print(db.runCommand({ping:1}).ok)" 2>&1 >/dev/null) && printf "%s" "$?")
     printf "Return %s\n" "$cmd"

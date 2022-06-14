@@ -11,7 +11,17 @@
 -  Copy `example.env` to `.env` and adjust the values to your needs.
 
         cp example.env .env
-- Run `docker-compose up` or `docker-compose up -d`
+- Run `docker-compose up -d` or `docker compose up -d` for newer Docker version 
+- To ensure your MongoDB replica is running, run the following command:
+        
+        docker compose exec mongo0 mongo -u your-root-user -p --eval 'rs.status()' --quiet
+    Or if you want to check the status of all the replica members:
+
+        docker compose exec mongo0 mongo -u root -p --eval 'rs.status().members.forEach(member => print(member.name, member.stateStr))' --quiet
+
+   
+
+
 
 ## Environment Variables Description
 | Variable | Description | Default |
@@ -23,4 +33,6 @@
 | UID | Set the UID for the MongoDB containers | 999 |
 | GID | Set the GID for the MongoDB containers | 999 |
 | MONGO_INITDB_HOST | Set the MongoDB host (container name) we want to connect to provision `mongo-setup` container | mongo0 |
+
+
 

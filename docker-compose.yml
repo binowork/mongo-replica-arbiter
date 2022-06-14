@@ -90,7 +90,7 @@ services:
       - ${PWD}/mongo-setup.sh:/data/mongo-setup.sh
       - ${PWD}/.env:/data/.env
     restart: on-failure
-    entrypoint: ["/bin/bash","/data/mongo-setup.sh", "${MONGO_INITDB_HOST}"]
+    entrypoint: ["/bin/bash","/data/mongo-setup.sh"]
     depends_on:
       - mongo0
       - mongo1
