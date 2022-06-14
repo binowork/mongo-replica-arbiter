@@ -1,0 +1,103 @@
+version: "3.9"
+services:
+  
+  mongo0:
+    image: ${MONGODB_IMAGE:-mongo:4}
+    container_name: mongo0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo0:/data/db
+      - ${PWD}/key.txt:/data/key.txt
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE=admin
+    user: "${UID}:${GID}"
+
+    entrypoint:
+      - bash
+      - -c
+      - |
+        chown -R ${UID}:${GID} /data/key.txt
+        chmod 400 /data/key.txt
+        exec docker-entrypoint.sh $${@}
+      
+    command: --bind_ip_all --replSet ${MONGO_REPLICA_NAME:-rs0} --port 27017 --dbpath /data/db --keyFile /data/key.txt --journal
+    restart: always
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "\"db.runCommand({ping: 1}).ok\"", "localhost:27017", "--quiet"]
+      interval: 10s
+      timeout: 1s
+      retries: 3
+      start_period: 50s
+  
+  mongo1:
+    image: ${MONGODB_IMAGE:-mongo:4}
+    container_name: mongo1
+    ports:
+      - "27018:27018"
+    volumes:
+      - mongo1:/data/db
+      - ${PWD}/key.txt:/data/key.txt
+    user: "${UID}:${GID}"
+    entrypoint:
+      - bash
+      - -c
+      - |
+        chown -R ${UID}:${GID} /data/key.txt
+        chmod 400 /data/key.txt
+        exec docker-entrypoint.sh $${@}
+      
+    command: --bind_ip_all --replSet ${MONGO_REPLICA_NAME:-rs0} --port 27018 --dbpath /data/db --keyFile /data/key.txt  --journal
+    restart: always
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "\"db.runCommand({ping: 1}).ok\"", "localhost:27018", "--quiet"]
+      interval: 10s
+      timeout: 1s
+      retries: 3
+      start_period: 50s
+  
+  mongo2:
+    image: ${MONGODB_IMAGE:-mongo:4}
+    container_name: mongo2
+    ports:
+      - "27019:27019"
+    volumes:
+      - ${PWD}/key.txt:/data/key.txt
+    entrypoint:
+      - bash
+      - -c
+      - |
+        chown -R ${UID}:${GID} /data/key.txt
+        chmod 400 /data/key.txt
+        exec docker-entrypoint.sh $${@}
+      
+    command: --bind_ip_all --replSet ${MONGO_REPLICA_NAME:-rs0} --port 27019 --journal --dbpath /data/db --keyFile /data/key.txt
+    restart: always
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "\"db.runCommand({ping: 1}).ok\"", "localhost:27019", "--quiet"]
+      interval: 10s
+      timeout: 1s
+      retries: 3
+      start_period: 50s
+  
+  mongo-setup:
+    image: ${MONGODB_IMAGE:-mongo:4}
+    container_name: mongo-setup
+    volumes:
+      - ${PWD}/key.txt:/data/key.txt
+      - ${PWD}/mongo-setup.sh:/data/mongo-setup.sh
+      - ${PWD}/.env:/data/.env
+    restart: on-failure
+    entrypoint: ["/bin/bash","/data/mongo-setup.sh", "${MONGO_INITDB_HOST}"]
+    depends_on:
+      - mongo0
+      - mongo1
+      - mongo2
+
+volumes:
+  mongo0:
+    driver: local
+  mongo1:
+    driver: local
